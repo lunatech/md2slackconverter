@@ -30,6 +30,14 @@ describe('inline markup', () => {
     expect(convert('[Bad](javascript:alert(1))')).toBe('<#|Bad>');
   });
 
+  it('escapes reserved delimiter characters in link url', () => {
+    expect(convert('[docs](https://example.com/a|b>c)')).toBe('<https://example.com/a%7Cb%3Ec|docs>');
+  });
+
+  it('sanitizes reserved delimiter characters in link label', () => {
+    expect(convert('[a|b <c>](https://example.com)')).toBe('<https://example.com|a&#124;b &lt;c&gt;>');
+  });
+
   it('image renders alt text only', () => {
     expect(convert('![alt text](https://example.com/img.png)')).toBe('alt text');
   });

@@ -7,6 +7,14 @@ function escapeSlackControlChars(text) {
     .replace(/>/g, '&gt;');
 }
 
+function sanitizeSlackLinkUrl(url) {
+  return url.replace(/\|/g, '%7C').replace(/>/g, '%3E');
+}
+
+function sanitizeSlackLinkLabel(label) {
+  return escapeSlackControlChars(label).replace(/\|/g, '&#124;');
+}
+
 class SlackRenderer extends Renderer {
   text(token) {
     if (token.tokens) {
@@ -32,10 +40,10 @@ class SlackRenderer extends Renderer {
   }
 
   link(token) {
-    const label = this.parser.parseInline(token.tokens);
+    const label = sanitizeSlackLinkLabel(this.parser.parseInline(token.tokens));
     const href = (token.href || '').trim().toLowerCase();
     const safe = href.startsWith('https://') || href.startsWith('http://');
-    const url = safe ? token.href.trim() : '#';
+    const url = safe ? sanitizeSlackLinkUrl(token.href.trim()) : '#';
     return `<${url}|${label}>`;
   }
 
