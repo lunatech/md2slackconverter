@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown → Slack mrkdwn</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Markdown → Slack <code>mrkdwn</code></h1>
+      <p>Paste your Markdown on the left. Slack-ready output appears on the right.</p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <label for="md-input">Markdown</label>
+        <textarea
+          id="md-input"
+          spellcheck="false"
+          placeholder="# Hello&#10;&#10;Type **Markdown** here..."
+        ></textarea>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <label for="slack-output">Slack mrkdwn</label>
+          <button id="copy-btn" type="button">Copy</button>
+        </div>
+        <textarea
+          id="slack-output"
+          spellcheck="false"
+          readonly
+          placeholder="Slack mrkdwn will appear here..."
+        ></textarea>
+      </section>
+    </main>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

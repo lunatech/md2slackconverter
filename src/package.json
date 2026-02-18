@@ -1,0 +1,20 @@
+{
+  "name": "md2slackconverter",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && npx @cyclonedx/cyclonedx-npm --output-file dist/sbom.json",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "marked": "17.0.3"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "4.1.2",
+    "vite": "7.3.1",
+    "vitest": "^4.0.18"
+  }
+}
