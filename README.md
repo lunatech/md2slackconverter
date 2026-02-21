@@ -6,6 +6,8 @@ Paste Markdown on the left, get Slack-ready output on the right. Conversion happ
 
 ## Conversion rules
 
+All source assets live inside the `src/` folder; running `cd src && npm run build` produces the bundled single-page output under `src/dist/` (including the generated `index.html`, JS, and CSS) that you can push to GitHub Pages or any static host.
+
 | Markdown | Slack mrkdwn |
 |---|---|
 | `**bold**` / `*bold*` | `*bold*` |
@@ -58,14 +60,14 @@ Run in watch mode during development:
 npm run test:watch
 ```
 
-## Static build
+## Static build & deployment
 
 ```bash
 cd src
 npm run build
 ```
 
-Outputs a self-contained `src/dist/` folder. Open `src/dist/index.html` directly in a browser or serve it from any static host (GitHub Pages, Netlify, S3, etc.).
+The build step emits a self-contained `src/dist/` folder whose `index.html` is the single-page output you deploy to GitHub Pages (or any static host). Point your Pages workflow/source at `src/dist/` (or push that folder to `gh-pages`) rather than editing a root-level `index.html` by hand.
 
 ## Security
 
@@ -87,3 +89,22 @@ The final Docker image contains only `nginx` and static files — no Node.js, no
 - [marked](https://github.com/markedjs/marked) — Markdown parser (AST-based, no regex)
 - [Vite](https://vitejs.dev/) — build tool (dev only)
 - nginx — static file server in Docker
+
+## Contributing
+
+See `AGENTS.md` for contributor expectations, project layout, coding style, and PR checklist.
+
+Typical contributor flow:
+
+```bash
+cd src
+npm ci
+npm test
+npm run build
+```
+
+Open PRs against the repository default branch and include test evidence in the PR description.
+
+## GitHub Pages
+
+Automate `src/dist/` deployment (for example via `peaceiris/actions-gh-pages` or `gh-pages` branch) so pushes to your configured deploy branch (currently `master` in `.github/workflows/pages.yml`) build and publish the generated `index.html`. Set the Pages source to that branch or folder to serve the converted Slack mrkdwn experience without editing HTML manually.
