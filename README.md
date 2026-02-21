@@ -90,6 +90,21 @@ The final Docker image contains only `nginx` and static files — no Node.js, no
 - [Vite](https://vitejs.dev/) — build tool (dev only)
 - nginx — static file server in Docker
 
+## Contributing
+
+See `AGENTS.md` for contributor expectations, project layout, coding style, and PR checklist.
+
+Typical contributor flow:
+
+```bash
+cd src
+npm ci
+npm test
+npm run build
+```
+
+Open PRs against the repository default branch and include test evidence in the PR description.
+
 ## GitHub Pages
 
-Automate `src/dist/` deployment (for example via `peaceiris/actions-gh-pages` or `gh-pages` branch) so each push to `main` builds the app and publishes the generated `index.html`. Set the Pages source to that branch or folder to serve the converted Slack mrkdwn experience without editing HTML manually.
+Automate `src/dist/` deployment (for example via `peaceiris/actions-gh-pages` or `gh-pages` branch) so pushes to your configured deploy branch (currently `master` in `.github/workflows/pages.yml`) build and publish the generated `index.html`. Set the Pages source to that branch or folder to serve the converted Slack mrkdwn experience without editing HTML manually.
