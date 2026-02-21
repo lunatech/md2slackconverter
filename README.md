@@ -4,6 +4,8 @@ A browser-based tool that converts standard Markdown to Slack [`mrkdwn`](https:/
 
 Paste Markdown on the left, get Slack-ready output on the right. Conversion happens entirely in the browser — no backend, no data sent anywhere.
 
+See it in action: https://lunatech.github.io/md2slackconverter/
+
 ## Conversion rules
 
 All source assets live inside the `src/` folder; running `cd src && npm run build` produces the bundled single-page output under `src/dist/` (including the generated `index.html`, JS, and CSS) that you can push to GitHub Pages or any static host.
