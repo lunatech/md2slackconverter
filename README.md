@@ -87,3 +87,7 @@ The final Docker image contains only `nginx` and static files — no Node.js, no
 - [marked](https://github.com/markedjs/marked) — Markdown parser (AST-based, no regex)
 - [Vite](https://vitejs.dev/) — build tool (dev only)
 - nginx — static file server in Docker
+
+## GitHub Pages
+
+The `gh-pages` branch now hosts a single-file static experience (`index.html`) that pulls `marked` from CDN and runs entirely in the browser. Open it directly or publish the branch via GitHub Pages to get Markdown → Slack mrkdwn working without any build tooling.

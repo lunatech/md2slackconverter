@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown → Slack mrkdwn</title>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #1f1711;
+        --surface: #2b2118;
+        --border: #4c3b2d;
+        --text: #f1e2c8;
+        --text-muted: #bda88a;
+        --accent: #c08a4d;
+        --accent-hover: #a8743e;
+        --success: #8ca86a;
+        --label: #d0bb9a;
+        --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+        --radius: 8px;
+      }
+
+      html, body {
+        height: 100%;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        min-height: 100dvh;
+      }
+
+      header {
+        padding: 20px 28px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+      }
+
+      header h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+
+      header h1 code {
+        font-family: var(--font-mono);
+        font-size: 0.95em;
+        color: #d8a66c;
+      }
+
+      header p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      .panel {
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        gap: 8px;
+        min-height: 0;
+      }
+
+      .panel:first-child {
+        border-right: 1px solid var(--border);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--label);
+      }
+
+      textarea {
+        flex: 1;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        padding: 14px 16px;
+        resize: none;
+        outline: none;
+        transition: border-color 0.15s;
+        min-height: 0;
+      }
+
+      textarea:focus {
+        border-color: var(--accent);
+      }
+
+      textarea[readonly] {
+        cursor: default;
+        color: #e0b783;
+      }
+
+      textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      button#copy-btn {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        padding: 4px 12px;
+        border-radius: 4px;
+        border: 1px solid var(--accent);
+        background: transparent;
+        color: #d8a66c;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+
+      button#copy-btn:hover {
+        background: var(--accent);
+        color: var(--bg);
+      }
+
+      button#copy-btn.copied {
+        border-color: var(--success);
+        color: var(--success);
+        background: transparent;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr 1fr;
+          overflow-y: auto;
+        }
+
+        .panel:first-child {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+
+        header {
+          flex-direction: column;
+          gap: 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Markdown → Slack <code>mrkdwn</code></h1>
+      <p>Paste your Markdown on the left. Slack-ready output appears on the right.</p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <label for="md-input">Markdown</label>
+        <textarea
+          id="md-input"
+          spellcheck="false"
+          placeholder="# Hello&#10;&#10;Type **Markdown** here..."
+        ></textarea>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <label for="slack-output">Slack mrkdwn</label>
+          <button id="copy-btn" type="button">Copy</button>
+        </div>
+        <textarea
+          id="slack-output"
+          spellcheck="false"
+          readonly
+          placeholder="Slack mrkdwn will appear here..."
+        ></textarea>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@17.0.3/marked.min.js"></script>
+    <script>
+      (function () {
+        const { Renderer, parse } = window.marked;
+
+        function escapeSlackControlChars(text) {
+          return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        }
+
+        function sanitizeSlackLinkUrl(url) {
+          return url.replace(/\|/g, '%7C').replace(/>/g, '%3E');
+        }
+
+        function sanitizeSlackLinkLabel(label) {
+          return escapeSlackControlChars(label).replace(/\|/g, '&#124;');
+        }
+
+        class SlackRenderer extends Renderer {
+          text(token) {
+            if (token.tokens) {
+              return this.parser.parseInline(token.tokens);
+            }
+            return escapeSlackControlChars(token.text);
+          }
+
+          strong(token) {
+            return `*${this.parser.parseInline(token.tokens)}*`;
+          }
+
+          em(token) {
+            return `_${this.parser.parseInline(token.tokens)}_`;
+          }
+
+          del(token) {
+            return `~${this.parser.parseInline(token.tokens)}~`;
+          }
+
+          codespan(token) {
+            return `\`${token.text}\``;
+          }
+
+          link(token) {
+            const label = sanitizeSlackLinkLabel(this.parser.parseInline(token.tokens));
+            const href = (token.href || '').trim().toLowerCase();
+            const safe = href.startsWith('https://') || href.startsWith('http://');
+            const url = safe ? sanitizeSlackLinkUrl(token.href.trim()) : '#';
+            return `<${url}|${label}>`;
+          }
+
+          image(token) {
+            return token.text || '';
+          }
+
+          br() {
+            return '\n';
+          }
+
+          paragraph(token) {
+            return `${this.parser.parseInline(token.tokens)}\n\n`;
+          }
+
+          heading(token) {
+            return `*${this.parser.parseInline(token.tokens)}*\n\n`;
+          }
+
+          code(token) {
+            return `\`\`\`\n${token.text}\n\`\`\`\n\n`;
+          }
+
+          blockquote(token) {
+            const body = this.parser.parse(token.tokens);
+            return (
+              body
+                .trim()
+                .split('\n')
+                .map((line) => `>${line}`)
+                .join('\n') +
+              '\n\n'
+            );
+          }
+
+          list(token) {
+            return (
+              token.items
+                .map((item, index) => this.listitem(item, token.ordered, token.start + index))
+                .join('') +
+              '\n'
+            );
+          }
+
+          listitem(token, ordered = false, index = 1) {
+            const body = this.parser.parse(token.tokens).trim();
+            const bullet = ordered ? `${index}.` : '-';
+            return `${bullet} ${body}\n`;
+          }
+
+          table(token) {
+            const strip = (cell) =>
+              this.parser
+                .parseInline(cell.tokens)
+                .replace(/\*([^*]+)\*/g, '$1');
+            const headers = token.header.map(strip);
+            const rows = token.rows.map((row) => row.map(strip));
+            const colWidths = headers.map((h, i) =>
+              Math.max(h.length, ...rows.map((r) => (r[i] || '').length))
+            );
+            const pad = (str, width) => str + ' '.repeat(width - str.length);
+            const formatRow = (cells) => '| ' + cells.map((c, i) => pad(c, colWidths[i])).join(' | ') + ' |';
+            const separator = '|-' + colWidths.map((w) => '-'.repeat(w)).join('-|-') + '-|';
+            const lines = [formatRow(headers), separator, ...rows.map(formatRow)];
+            return '```\n' + lines.join('\n') + '\n```\n\n';
+          }
+
+          hr() {
+            return '---\n\n';
+          }
+
+          space() {
+            return '';
+          }
+        }
+
+        function convert(markdown) {
+          return parse(markdown, { renderer: new SlackRenderer() }).trim();
+        }
+
+        const input = document.getElementById('md-input');
+        const output = document.getElementById('slack-output');
+        const copyBtn = document.getElementById('copy-btn');
+        let syncingScroll = false;
+
+        function syncOutput() {
+          output.value = input.value.trim() ? convert(input.value) : '';
+        }
+
+        input.addEventListener('input', syncOutput);
+
+        function getScrollRatio(element) {
+          const maxScrollTop = element.scrollHeight - element.clientHeight;
+          return maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0;
+        }
+
+        function setScrollFromRatio(element, ratio) {
+          const maxScrollTop = element.scrollHeight - element.clientHeight;
+          element.scrollTop = maxScrollTop > 0 ? ratio * maxScrollTop : 0;
+        }
+
+        function syncScroll(source, target) {
+          if (syncingScroll) return;
+          syncingScroll = true;
+          setScrollFromRatio(target, getScrollRatio(source));
+          requestAnimationFrame(() => {
+            syncingScroll = false;
+          });
+        }
+
+        input.addEventListener('scroll', () => {
+          syncScroll(input, output);
+        });
+
+        output.addEventListener('scroll', () => {
+          syncScroll(output, input);
+        });
+
+        function flashCopyFeedback() {
+          const original = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = original;
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }
+
+        copyBtn.addEventListener('click', () => {
+          if (!output.value) return;
+
+          if (!navigator.clipboard) {
+            output.select();
+            document.execCommand('copy');
+            output.setSelectionRange(0, 0);
+            flashCopyFeedback();
+            return;
+          }
+
+          navigator.clipboard.writeText(output.value).then(flashCopyFeedback);
+        });
+      })();
+    </script>
+  </body>
+</html>
